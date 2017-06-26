@@ -4,8 +4,10 @@
 
 import urllib
 import auth
-from urlparse import parse_qsl
+#from urlparse import parse_qsl
 from utils import Json2ObjectsFactory
+
+parse_qsl = lambda x:x
 
 class FacebookClient(object):
     """
@@ -16,7 +18,7 @@ class FacebookClient(object):
     GRAPH_URL = "https://graph.facebook.com/"
     API_URL = "https://api.facebook.com/"
 
-    BASE_AUTH_URL = "%sdialog/oauth?" % FACEBOOK_URL 
+    BASE_AUTH_URL = "%sdialog/oauth?" % FACEBOOK_URL
     DIALOG_BASE_URL = "%sdialog/feed?" % FACEBOOK_URL
     FBQL_BASE_URL = "%sfql?" % GRAPH_URL
     BASE_TOKEN_URL = "%soauth/access_token?" % GRAPH_URL
@@ -47,7 +49,10 @@ class FacebookClient(object):
         """
         if not data:
             data = None
-        return urllib.urlopen(url, data).read()
+        resp= urllib.urlopen(url, data).read()
+        if isinstance(resp, str):
+            return self.factory.loads(resp)
+        return resp
 
     def _make_auth_request(self, path, **data):
         """
@@ -55,6 +60,7 @@ class FacebookClient(object):
             This method requires authentication!
             Don't forget to get the access token before use it.
         """
+
         if self.access_token is None:
             raise PyfbException("Must Be authenticated. Did you forget to get the access token?")
 
@@ -135,14 +141,13 @@ class FacebookClient(object):
         url = "%s%s" % (self.BASE_TOKEN_URL, url_path)
 
         data = self._make_request(url)
-
         if not "access_token" in data:
             ex = self.factory.make_object('Error', data)
             raise PyfbException(ex.error.message)
-
         data = dict(parse_qsl(data))
         self.access_token = data.get('access_token')
         self.expires = data.get('expires')
+
         return self.access_token
 
     def exchange_token(self, app_secret_key, exchange_token):
@@ -158,7 +163,9 @@ class FacebookClient(object):
         url = "%s%s" % (self.BASE_TOKEN_URL, url_path)
 
         data = self._make_request(url)
-
+        import q
+        q("====")
+        q(data)
         if not "access_token" in data:
             ex = self.factory.make_object('Error', data)
             raise PyfbException(ex.error.message)
@@ -201,7 +208,7 @@ class FacebookClient(object):
         if object_name is None:
             object_name = path
         path = "%s/%s" % (id, path.lower())
-        
+
         obj = self.get_one(path, object_name)
         obj_list = self.factory.make_paginated_list(obj, object_name)
 
@@ -250,7 +257,7 @@ class FacebookClient(object):
         data = self._make_request(url)
 
         objs = self.factory.make_objects_list(table, data)
-        
+
         if hasattr(objs, 'error'):
             raise PyfbException(objs.error.message)
 

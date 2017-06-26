@@ -64,11 +64,18 @@ class Json2ObjectsFactory(object):
         return simplejson.loads(data)
 
     def make_object(self, name, data):
-        raw = self.loads(data)
+        if isinstance(data, str):
+            raw = self.loads(data)
+        else:
+            raw = data
         return self._make_object(name, raw)
 
     def make_objects_list(self, name, data):
-        raw = self.loads(data)
+        if isinstance(data, str):
+            raw = self.loads(data)
+        else:
+            raw = data
+
         return self._make_objects_list(name, raw)
 
     def make_paginated_list(self, obj, object_name):
