@@ -64,8 +64,12 @@ class FacebookClient(object):
         if self.access_token is None:
             raise PyfbException("Must Be authenticated. Did you forget to get the access token?")
 
+        
         token_url = "?access_token=%s" % self.access_token
+        if "accounts" in path:
+            token_url +="&limit=100"
         url = "%s%s%s" % (self.GRAPH_URL, path, token_url)
+        print url
         if data:
             post_data = urllib.urlencode(data)
         else:
